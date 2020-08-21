@@ -69,28 +69,57 @@ Generally, the simulation code resides in [simulation](simulation/), while the i
 
 ## Singularity
 
-To use [[https://sylabs.io/docs/][Singularity]], first create the container
+To use [[https://sylabs.io/docs/][Singularity]], first create the container:
 
 ``` sh
 sudo singularity build [name].sif Singularity
 ```
 
-To run the code inside the singularity container `[name].sif`, run
+To run the code inside the singularity container `[name].sif` do:
 
 ``` sh
 singularity run \
     --nv \ # to enable gpu calculations
     --cleanenv \ # do not transfer any local environment variables
-    -B results:"${RESULTS_MOUNT}" \ # where to store results/data etc
-    -B "${TMP}":/tmp \ # in case the /tmp directory will be heavily used
+    -B [location_for_large_disk_usage]:/code/data \ # e.g. where to store results, data, etc
+    -B tmp:/tmp \ # in case of heavy use of /tmp
     --no-home \ # turn off mount the current directory to home
     --contain \ # turn off mount the current directory to home
-    --writable-tmpfs \ # make container temporarily mutable (with very limited space, rely on mounts)
+    --writable-tmpfs \ # make container temporarily mutable (with very limited space)
     [name].sif \
-    pipenv run python3 test.py # or any other command you'd might want to run
+    python3 test.py -h # or any other command you'd might want to run
 ```
 
 ## Docker
+
+Build Docker images (may require `sudo`):
+
+``` sh
+docker build --rm -t [docker_name] --no-cache [path_to_dockerfile]
+```
+
+To run experiments do:
+
+``` sh
+docker run \
+  --rm \ # remove container upon termination
+  -v [location_for_large_disk_usage]:/code/data:ro \ # e.g. where to store results, data, etc
+  -w /code \ # working directory inside container
+  --gpus all \ # access all gpus (see below for requirements)
+  [name_docker_image] \ 
+  python3 test.py -h # or any other command you'd might want to run
+
+```
+
+### Docker gpu support
+
+Docker gpu support requires `nvidia-container-toolkit` and `cuda >= 10.2`. To
+install the toolkit, run:
+
+``` sh
+sudo apt update
+sudo apt install -y nvidia-container-toolkit
+```
 
 ## References
 

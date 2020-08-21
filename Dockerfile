@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM nvidia/cuda:10.2-cudnn7-runtime
     MAINTAINER Andreas Munk <andreas@ammunk.com>
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -21,7 +21,6 @@ ENV LC_ALL=C.UTF-8
 RUN git clone https://github.com/pyprob/mining-for-substructure-lens.git /code
 
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-    python3 get-pip.py && rm get-pip.py && \
-    pip install pipenv
+    python3 get-pip.py && rm get-pip.py
 
-RUN cd code && pipenv install
+RUN cd code && pip install -r requirements.txt
