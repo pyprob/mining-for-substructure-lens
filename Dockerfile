@@ -24,3 +24,4 @@ RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python3 get-pip.py && rm get-pip.py
 
 RUN cd code && pip install -r requirements.txt
+RUN cd code && sed -i 's/pipenv run //g' simple_test_script.bash
