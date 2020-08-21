@@ -149,3 +149,7 @@ data/
 *.log
 *.synctex.gz
 *.dbj
+*results*
+*tmp*
+*data*
+*.sif

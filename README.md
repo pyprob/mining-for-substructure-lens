@@ -67,6 +67,31 @@ Generally, the simulation code resides in [simulation](simulation/), while the i
 `beta_code = beta_paper - 1`, so the fiducial value `beta = -0.9` from the paper is internally represented as
 `beta = -1.9`.
 
+## Singularity
+
+To use [[https://sylabs.io/docs/][Singularity]], first create the container
+
+``` sh
+sudo singularity build [name].sif Singularity
+```
+
+To run the code inside the singularity container `[name].sif`, run
+
+``` sh
+singularity run \
+    --nv \ # to enable gpu calculations
+    --cleanenv \ # do not transfer any local environment variables
+    -B results:"${RESULTS_MOUNT}" \ # where to store results/data etc
+    -B "${TMP}":/tmp \ # in case the /tmp directory will be heavily used
+    --no-home \ # turn off mount the current directory to home
+    --contain \ # turn off mount the current directory to home
+    --writable-tmpfs \ # make container temporarily mutable (with very limited space, rely on mounts)
+    [name].sif \
+    pipenv run python3 test.py # or any other command you'd might want to run
+```
+
+## Docker
+
 ## References
 
 If you use this code, please cite our paper:

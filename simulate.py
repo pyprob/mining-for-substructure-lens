@@ -60,7 +60,7 @@ def simulate_calibration(i_theta, n=1000, fixm=False, fixz=False, fixalign=False
         f_sub,
         beta,
     )
-    theta, x, _, _, _, z = augmented_data(
+    theta, _, x, _, _, _, _, _, z = augmented_data(
         f_sub=f_sub,
         beta=beta,
         n_images=n,
@@ -79,7 +79,7 @@ def simulate_calibration(i_theta, n=1000, fixm=False, fixz=False, fixalign=False
 def simulate_calibration_ref(n=1000, fixm=False, fixz=False, fixalign=False):
     logger.info("Generating calibration data with %s images from prior", n)
     f_sub, beta = draw_params_from_prior(n)
-    theta, x, _, _, _, z = augmented_data(
+    theta, _, x, _, _, _, _, _, z = augmented_data(
         f_sub=f_sub,
         beta=beta,
         n_images=n,
@@ -103,7 +103,7 @@ def simulate_test_point(n=1000, fixm=False, fixz=False, fixalign=False):
         f_sub,
         beta,
     )
-    theta, x, _, _, _, z = augmented_data(
+    theta, _, x, _, _, _, _, _, z = augmented_data(
         f_sub=f_sub,
         beta=beta,
         n_images=n,
@@ -122,7 +122,7 @@ def simulate_test_point(n=1000, fixm=False, fixz=False, fixalign=False):
 def simulate_test_prior(n=1000, fixm=False, fixz=False, fixalign=False):
     logger.info("Generating prior test data with %s images", n)
     f_sub, beta = draw_params_from_prior(n)
-    theta, x, _, _, _, z = augmented_data(
+    theta, _, x, _, _, _, _, _, z = augmented_data(
         f_sub=f_sub,
         beta=beta,
         n_images=n,
