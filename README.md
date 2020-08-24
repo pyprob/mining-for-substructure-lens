@@ -69,7 +69,7 @@ Generally, the simulation code resides in [simulation](simulation/), while the i
 
 ## Singularity
 
-To use [[https://sylabs.io/docs/][Singularity]], first create the container:
+To use [Singularity](https://sylabs.io/docs/), first create the container:
 
 ``` sh
 sudo singularity build [name].sif Singularity
