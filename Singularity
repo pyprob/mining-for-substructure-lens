@@ -32,7 +32,7 @@ python3 get-pip.py && rm get-pip.py
 cd code
 
 pip install -r requirements.txt
-sed -i 's/pipenv run //g' simple_test_script.bash
+sed -i 's/pipenv run python/python3/g' simple_test_script.bash
 
 # make working directory
 
