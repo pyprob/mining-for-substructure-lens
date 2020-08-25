@@ -103,7 +103,7 @@ To run experiments do:
 ``` sh
 docker run \
   --rm \ # remove container upon termination
-  -v [location_for_large_disk_usage]:/code/data:ro \ # e.g. where to store results, data, etc
+  -v [location_for_large_disk_usage]:/code/data \ # e.g. where to store results, data, etc
   -w /code \ # working directory inside container
   --gpus all \ # access all gpus (see below for requirements)
   [name_docker_image] \ 
