@@ -8,10 +8,10 @@ pipenv run python -u simulate.py --fixz --fixalign -n $N --name train_mass --dir
 pipenv run python -u simulate.py --fixz --fixm -n $N --name train_align --dir $base
 pipenv run python -u simulate.py -n $N --name train_full --dir $base
 
-pipenv run python -u simulate.py --calibrate --theta 1 --fixz --fixm --fixalign -n $N --name calibrate_fix_theta --dir $base
-pipenv run python -u simulate.py --calibrate --theta 1 --fixz --fixalign -n $N --name calibrate_mass_theta --dir $base
-pipenv run python -u simulate.py --calibrate --theta 1 --fixz --fixm -n $N --name calibrate_align_theta --dir $base
-pipenv run python -u simulate.py --calibrate --theta 1 -n $N --name calibrate_full_theta --dir $base
+pipenv run python -u simulate.py --calibrate --theta 0 --fixz --fixm --fixalign -n $N --name calibrate_fix_theta_0 --dir $base
+pipenv run python -u simulate.py --calibrate --theta 0 --fixz --fixalign -n $N --name calibrate_mass_theta_0 --dir $base
+pipenv run python -u simulate.py --calibrate --theta 0 --fixz --fixm -n $N --name calibrate_align_theta_0 --dir $base
+pipenv run python -u simulate.py --calibrate --theta 0 -n $N --name calibrate_full_theta_0 --dir $base
 
 pipenv run python -u simulate.py --calref --fixz --fixm --fixalign -n $N --name calibrate_fix_ref --dir $base
 pipenv run python -u simulate.py --calref --fixz --fixalign -n $N --name calibrate_mass_ref --dir $base
@@ -239,11 +239,34 @@ do
 
 done
 
+tag=full
+for modeltag in full full_sgd1e2
+do
+   echo ""
+   echo ""
+   echo ""
+   echo "Evaluating ${modeltag} on calibration sample"
+   echo ""
+   python -u test.py alices_${modeltag} calibrate_${tag}_theta_0 alices_${modeltag}_calibrate_theta_0 --dir $base --igrid 0
+done
+
+tag=full
+for modeltag in full full_sgd1e2
+do
+    echo ""
+    echo ""
+    echo ""
+    echo "Evaluating ${modeltag} on reference calibration sample"
+    echo ""
+    python -u test.py alices_${modeltag} calibrate_${tag}_ref alices_${modeltag}_calibrate_ref --dir $base --grid
+done
+
+
 # Calibration
 
-pipenv run python -u calibrate.py alices_full_grid alices_calibrate_full --dir $base --bins 20 --name 20bins
-pipenv run python -u calibrate.py alices_full_grid alices_calibrate_full --dir $base --bins 40 --name 40bins
-pipenv run python -u calibrate.py alices_full_grid alices_calibrate_full --dir $base --bins 60 --name 60bins
-pipenv run python -u calibrate.py alices_full_grid alices_calibrate_full --dir $base --bins 20 -s --name 20sbins
-pipenv run python -u calibrate.py alices_full_grid alices_calibrate_full --dir $base --bins 40 -s --name 40sbins
-pipenv run python -u calibrate.py alices_full_grid alices_calibrate_full --dir $base --bins 60 -s --name 60sbins
+pipenv run python -u calibrate.py alices_full_grid alices_full_calibrate --dir $base --bins 20 --name 20bins
+pipenv run python -u calibrate.py alices_full_grid alices_full_calibrate --dir $base --bins 40 --name 40bins
+pipenv run python -u calibrate.py alices_full_grid alices_full_calibrate --dir $base --bins 60 --name 60bins
+pipenv run python -u calibrate.py alices_full_grid alices_full_calibrate --dir $base --bins 20 -s --name 20sbins
+pipenv run python -u calibrate.py alices_full_grid alices_full_calibrate --dir $base --bins 40 -s --name 40sbins
+pipenv run python -u calibrate.py alices_full_grid alices_full_calibrate --dir $base --bins 60 -s --name 60sbins
