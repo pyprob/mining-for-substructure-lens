@@ -28,7 +28,7 @@ pipenv run python -u simulate.py --fixz --fixalign -n $N --name test_mass_prior 
 pipenv run python -u simulate.py --fixz --fixm -n $N --name test_align_prior --test --dir $base
 pipenv run python -u simulate.py -n $N --name test_full_prior --test --dir $base
 
-Combination
+# Combination
 
 pipenv run python -u combine_samples.py --regex train_fix "train_fix" --dir $base
 pipenv run python -u combine_samples.py --regex test_fix_point "test_fix" --dir $base
