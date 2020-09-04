@@ -7,6 +7,9 @@ from astropy.cosmology import Planck15
 from astropy.convolution import convolve, Gaussian2DKernel
 from autograd import make_jvp
 
+import pyprob
+import torch
+
 # from tqdm import *
 
 logger = logging.getLogger(__name__)
@@ -96,18 +99,18 @@ class LensingObservationWithSubhalos:
         if self.draw_host_redshift:
             self.z_l = 2.0
             while self.z_l > 1.0:
-                self.z_l = 10 ** np.random.normal(-0.25, 0.25)
+                self.z_l = 10 ** pyprob.sample(pyprob.distributions.Normal(-0.25, 0.25)).double().item()
         else:
             self.z_l = 10.0 ** -0.25
 
         if self.draw_host_mass:
-            self.sigma_v = np.random.normal(225, 50)
+            self.sigma_v = pyprob.sample(pyprob.distributions.Normal(225, 50)).double().item()
         else:
             self.sigma_v = 225.0
 
         if self.draw_alignment:
-            self.theta_x_0 = np.random.normal(0, 0.2)
-            self.theta_y_0 = np.random.normal(0, 0.2)
+            self.theta_x_0 = pyprob.sample(pyprob.distributions.Normal(0, 0.2)).double().item()
+            self.theta_y_0 = pyprob.sample(pyprob.distributions.Normal(0, 0.2)).double().item()
         else:
             self.theta_x_0 = 0.0
             self.theta_y_0 = 0.0
@@ -204,7 +207,8 @@ class LensingObservationWithSubhalos:
         lsi = LensingSim(lens_list, [src_param_dict], global_dict, observation_dict)
 
         self.image = lsi.lensed_image()
-        self.image_poiss = np.random.poisson(self.image)  # Poisson fluctuate
+        # self.image_poiss = np.random.poisson(self.image)  # Poisson fluctuate
+        self.image_poiss = pyprob.sample(pyprob.distributions.Poisson(self.image.flatten())).reshape(self.image.shape).double().numpy()
         self.image_poiss_psf = self._convolve_psf(self.image_poiss, fwhm_psf, pixel_size)  # Convolve with PSF
 
         # Augmented data
@@ -334,7 +338,7 @@ class LensingObservationWithSubhalos:
         b = 3.48
         if scatter:
             sigma_log10_M_200 = 0.13  # Lognormal scatter
-            log10_M_200 = np.random.normal(a + b * np.log10(sigma_v / (100 * Kmps)), sigma_log10_M_200)
+            log10_M_200 = pyprob.sample(pyprob.distributions.Normal(a + b * np.log10(sigma_v / (100 * Kmps)), sigma_log10_M_200)).double().item()
         else:
             log10_M_200 = a + b * np.log10(sigma_v / (100 * Kmps))
         return (10 ** log10_M_200) * 1e12 * M_s
@@ -398,7 +402,7 @@ class SubhaloPopulation:
 
         # Fraction and number of subhalos within lensing region of interest specified by theta_roi
         self.f_sub_roi = max(MassProfileNFW.M_cyl_div_M0(self.theta_roi * asctorad / theta_s), 0.0)
-        self.n_sub_roi = np.random.poisson(self.f_sub_roi * self.n_sub_tot)
+        self.n_sub_roi = int(pyprob.sample(pyprob.distributions.Poisson(self.f_sub_roi * self.n_sub_tot)))
         logger.debug("%s subhalos (%s expected)", self.n_sub_roi, self.f_sub_roi * self.n_sub_tot)
 
         # Sample of subhalo masses drawn from subhalo mass function
@@ -463,7 +467,9 @@ class SubhaloPopulation:
         Draw subhalo masses from SHMF with slope `beta` and min/max masses `m_sub_min` and `m_sub_max` . Stolen from:
         https://stackoverflow.com/questions/31114330/python-generating-random-numbers-from-a-power-law-distribution
         """
-        u = np.random.uniform(0, 1, size=n_sub)
+        # u = np.random.uniform(0, 1, size=n_sub)
+        u = pyprob.sample(pyprob.distributions.Uniform(torch.zeros(n_sub),
+                                                       torch.ones(n_sub))).flatten().double().numpy()
         m_low_u, m_high_u = m_sub_min ** (beta + 1), m_sub_max ** (beta + 1)
         return (m_low_u + (m_high_u - m_low_u) * u) ** (1.0 / (beta + 1.0))
 
@@ -475,8 +481,12 @@ class SubhaloPopulation:
         x_sub = []
         y_sub = []
         while len(x_sub) < n_sub:
-            x_candidates = np.random.uniform(low=-r_max, high=r_max, size=n_sub - len(x_sub))
-            y_candidates = np.random.uniform(low=-r_max, high=r_max, size=n_sub - len(x_sub))
+            # x_candidates = np.random.uniform(low=-r_max, high=r_max, size=n_sub - len(x_sub))
+            x_candidates = pyprob.sample(pyprob.distributions.Uniform(torch.zeros(n_sub - len(x_sub))-r_max,
+                                                                      torch.zeros(n_sub - len(x_sub))+r_max)).flatten().double().numpy()
+            # y_candidates = np.random.uniform(low=-r_max, high=r_max, size=n_sub - len(x_sub))
+            y_candidates = pyprob.sample(pyprob.distributions.Uniform(torch.zeros(n_sub - len(x_sub))-r_max,
+                                                                      torch.zeros(n_sub - len(x_sub))+r_max)).flatten().double().numpy()
             r2 = x_candidates ** 2 + y_candidates ** 2
             good = (r2 <= r_max ** 2) * (r2 >= r_min ** 2)
             x_sub += list(x_candidates[good])
