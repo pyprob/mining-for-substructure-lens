@@ -22,7 +22,7 @@ export PATH="/opt/conda/bin:$PATH"
 export LANG=C.UTF-8
 export LC_ALL=C.UTF-8
 
-git clone https://github.com/pyprob/mining-for-substructure-lens.git /code
+git clone -b pyprob_implementation https://github.com/pyprob/mining-for-substructure-lens.git /code
 
 # install pip
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
