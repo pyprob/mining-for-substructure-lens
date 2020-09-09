@@ -9,6 +9,7 @@ from autograd import make_jvp
 
 import pyprob
 import torch
+import numpy as np
 
 # from tqdm import *
 
