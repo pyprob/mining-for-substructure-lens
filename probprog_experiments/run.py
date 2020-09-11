@@ -108,6 +108,7 @@ def plot_distribution(dists, file_name=None, n_bins=30, num_resample=None,
             dist = dist.resample(num_resample)
         for lat in latents_of_interest:
             marginal_dists[i]['dist'+lat] = dist.map(lambda t: t[lat])
+    pyprob.set_verbosity(2)
 
 
 ### Define model and other variables ##
@@ -138,8 +139,10 @@ if "posterior" in gen_mode:
 if "prior" in plot_types:
     prior = Empirical(file_name=prior_file_name)
     plot_distribution(prior)
+    prior.close()
 if "ground_truth" in plot_types:
     pass
 if "posterior" in plot_types:
     posterior = Empirical(file_name=posterior_file_name)
     plot_distribution(posterior)
+    posterior.close()
