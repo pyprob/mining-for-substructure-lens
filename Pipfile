@@ -15,6 +15,7 @@ astropy = "*"
 autograd = "*"
 pyprob = "*"
 palettable = "*"
+seaborn = "*"
 
 [requires]
 python_version = "3.8"

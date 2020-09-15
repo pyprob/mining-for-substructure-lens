@@ -1,6 +1,7 @@
 import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
+import seaborn as sns
 
 import palettable
 
@@ -21,8 +22,17 @@ COLOR_BKG = "0.7"  # "#B7B7B7"
 
 
 def setup():
-    matplotlib.rcParams.update({'text.usetex': True, 'font.size': 10, 'font.family': 'serif'})
-    params= {'text.latex.preamble' : [r'\usepackage{amsmath}', r'\usepackage{amssymb}']}
+    sns.set_style("ticks", {"xtick.major.size": 11, "ytick.major.size": 11})
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif', size=11)
+    params = {'text.latex.preamble': "\n".join([r'\usepackage{siunitx}',
+                                    r'\usepackage{amsfonts,amsmath,amssymb,amsthm}',
+                                    (r'\sisetup{round-mode = places, round-precision = 2,' +
+                                    r'zero-decimal-to-integer}'),
+                                    r'\usepackage{bm}',
+                                    r'\usepackage[utf8]{inputenc}']),
+            'legend.fontsize': 11,
+            'xtick.labelsize': 11, 'ytick.labelsize': 11, 'axes.labelsize': 11}
     plt.rcParams.update(params)
 
 
