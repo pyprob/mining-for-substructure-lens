@@ -11,12 +11,13 @@ import pickle
 from pathlib import Path
 
 from simulation.wrapper import LensingObservationWithSubhalos
-from simulation.units import *
+import simulation.units as units
 import probprog_settings
 import pyprob
 from pyprob.distributions import Empirical
 import torch
 import numpy as np
+import seaborn as sns
 
 probprog_settings.setup()
 
@@ -57,11 +58,6 @@ class LensingModel(pyprob.Model):
     def __init__(self):
         super(LensingModel, self).__init__()
         # TODO use ../simulation/units.py instead
-        GeV = 10 ** 6
-        eV = 10 ** -9 * GeV
-        Kilogram = 5.6085 * 10 ** 35 * eV
-        # Particle and astrophysics parameters
-        self.M_s = 1.99 * 10 ** 30 * (Kilogram)
 
     def forward(self):
         lo = LensingObservationWithSubhalos(f_sub=0.05, beta=-1.9,
@@ -69,12 +65,12 @@ class LensingModel(pyprob.Model):
                                             )
 
         # tagging
-        pyprob.tag(lo.M_200_hst / self.M_s, name='host_halo_mass')
+        pyprob.tag(lo.M_200_hst / units.M_s, name='host_halo_mass')
         pyprob.tag(lo.z_l, name='host_halo_redshift')
         pyprob.tag(np.array([lo.theta_x_0, lo.theta_y_0]),
                    name='host_halo_offset_xy')
         pyprob.tag(lo.n_sub_roi, name='number_subhalos')
-        pyprob.tag(lo.m_subs / self.M_s, name='individual_subhalo_masses')
+        pyprob.tag(lo.m_subs / units.M_s, name='individual_subhalo_masses')
         pyprob.tag(np.transpose([lo.theta_xs, lo.theta_ys]),
                    name='position_of_individual_subhalos')
 
@@ -98,6 +94,8 @@ def plot_trace(trace, file_name=None):
     plt.xlabel(r"$\theta_x$\,[as]")
     plt.ylabel(r"$\theta_y$\,[as]")
 
+    # TODO SCATTERPLOT of the multivariate stuff each dot with a different color
+
     if file_name:
         print('Plotting to file: {}'.format(file_name))
         plt.savefig(file_name)
@@ -114,13 +112,13 @@ def plot_distribution(dists, file_name=None, n_bins=30, num_resample=1000,
                            'individual_subhalo_masses',
                            'position_of_individual_subhalos']
     marginal_dists = [{} for _ in range(len(dists))]
-    pyprob.set_verbosity(0)
+    #pyprob.set_verbosity(0)
     for i, dist in enumerate(dists):
         if num_resample is not None:
             dist = dist.resample(num_resample)
         for lat in latents_of_interest:
             marginal_dists[i]['dist_'+lat] = dist.map(lambda t: t[lat])
-    pyprob.set_verbosity(2)
+    #pyprob.set_verbosity(2)
 
     fig = plt.figure(constrained_layout=True)
     gs = fig.add_gridspec(3, 2)
@@ -157,6 +155,9 @@ def plot_distribution(dists, file_name=None, n_bins=30, num_resample=1000,
         if trace:
             ax.vlines(trace[lat][k], 0, np.max(h)*1.05, linestyles='dashed',
                       zorder=2)
+
+    # TODO SCATTERPLOT of the multivariate stuff subhalo with a different color
+    # each sample with alpha
 
     if file_name:
         print('Plotting to file: {}'.format(file_name))
@@ -195,7 +196,7 @@ if "prior" in plot_types:
     prior = Empirical(file_name=prior_file_name)
     plot_distribution(prior,
                       file_name=fig_directories['prior'] / 'histograms.pdf',
-                      num_resample=None)
+                      num_resample=1000)
     prior.close()
 if "ground_truth" in plot_types:
     gt_trace = torch.load(gt_file_name)
