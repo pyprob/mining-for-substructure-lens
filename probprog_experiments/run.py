@@ -11,7 +11,7 @@ import pickle
 from pathlib import Path
 
 from simulation.wrapper import LensingObservationWithSubhalos
-from simulation.units import M_s
+from simulation.units import *
 import probprog_settings
 import pyprob
 from pyprob.distributions import Empirical
@@ -22,27 +22,27 @@ probprog_settings.setup()
 
 choices = ['prior', 'posterior', 'ground_truth', '']
 parser = argparse.ArgumentParser()
-parser.add_argument('--dir', default='results', type=str)
+parser.add_argument('--results_dir', default='results', type=str)
 parser.add_argument('--fig_dir', default='figs', type=str)
 parser.add_argument('--num_traces', default=int(1e2), type=int)
 parser.add_argument('--plot_types', nargs='+', default='', type=str,
                     choices=choices)
-parser.add_argument('--gen_mode', nargs='+', default='',
+parser.add_argument('--gen_modes', nargs='+', default='',
                     choices=choices, type=str)
 
 args = parser.parse_args()
-base_dir = Path(args.dir)
+results_dir = Path(args.results_dir)
 fig_dir = Path(args.fig_dir)
 plot_types = args.plot_types
-gen_mode = args.gen_mode
+gen_mode = args.gen_modes
 num_traces = args.num_traces
 
-directories = {d: base_dir / d
-               for d in ["prior", "posterior", "ground_truth"]}
+results_directories = {d: results_dir / d
+                       for d in ["prior", "posterior", "ground_truth"]}
 fig_directories = {d: fig_dir / d
-                    for d in ["prior", "posterior", "ground_truth"]}
+                   for d in ["prior", "posterior", "ground_truth"]}
 
-for key, new_dir in directories.items():
+for key, new_dir in results_directories.items():
     if not new_dir.exists():
         new_dir.mkdir(parents=True)
 
@@ -104,7 +104,7 @@ def plot_trace(trace, file_name=None):
     else:
         plt.show()
 
-def plot_distribution(dists, file_name=None, n_bins=30, num_resample=None,
+def plot_distribution(dists, file_name=None, n_bins=30, num_resample=1000,
                       trace=None):
     if isinstance(dists, Empirical):
         dists = [dists]
@@ -169,9 +169,9 @@ def plot_distribution(dists, file_name=None, n_bins=30, num_resample=None,
 ### Define model and other variables ##
 model = LensingModel()
 
-prior_file_name = str(directories['prior'] / 'prior.distribution')
-gt_file_name = str(directories['ground_truth'] / 'gt')
-posterior_file_name = str(directories['posterior'] / 'posterior.distribution')
+prior_file_name = str(results_directories['prior'] / 'prior.distribution')
+gt_file_name = str(results_directories['ground_truth'] / 'gt')
+posterior_file_name = str(results_directories['posterior'] / 'posterior.distribution')
 
 
 ### GENERATE DISTRIBUTIONS ###
@@ -194,7 +194,8 @@ if "posterior" in gen_mode:
 if "prior" in plot_types:
     prior = Empirical(file_name=prior_file_name)
     plot_distribution(prior,
-                      file_name=fig_directories['prior'] / 'historams.pdf')
+                      file_name=fig_directories['prior'] / 'histograms.pdf',
+                      num_resample=None)
     prior.close()
 if "ground_truth" in plot_types:
     gt_trace = torch.load(gt_file_name)
@@ -204,5 +205,5 @@ if "posterior" in plot_types:
     posterior = Empirical(file_name=posterior_file_name)
     obs_trace = torch.load(gt_file_name)
     plot_distribution(posterior, trace=obs_trace,
-                      file_name=fig_directories['posterior'] / 'historams.pdf')
+                      file_name=fig_directories['posterior'] / 'histograms.pdf')
     posterior.close()
