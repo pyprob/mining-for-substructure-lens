@@ -31,16 +31,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--results_dir', default='results', type=str)
 parser.add_argument('--fig_dir', default='figs', type=str)
 parser.add_argument('--num_traces', default=int(1e2), type=int)
-parser.add_argument('--plot_types', nargs='+', default='', type=str,
+parser.add_argument('--plot', nargs='+', default='', type=str,
                     choices=choices)
-parser.add_argument('--gen_modes', nargs='+', default='',
+parser.add_argument('--gen', nargs='+', default='',
                     choices=choices, type=str)
 
 args = parser.parse_args()
 results_dir = Path(args.results_dir)
 fig_dir = Path(args.fig_dir)
-plot_types = args.plot_types
-gen_mode = args.gen_modes
+plot_mode = args.plot
+gen_mode = args.gen
 num_traces = args.num_traces
 
 results_directories = {d: results_dir / d
@@ -108,7 +108,7 @@ def plot_trace(trace, file_name=None):
         plt.show()
 
 
-def plot_distribution(dists, file_name=None, n_bins=25, num_resample=100, trace=None):
+def plot_distribution(dists, file_name=None, n_bins=25, num_resample=1000, trace=None):
     if isinstance(dists, Empirical):
         dists = [dists]
 
@@ -190,7 +190,7 @@ def plot_distribution(dists, file_name=None, n_bins=25, num_resample=100, trace=
         dist_masses = marginal_dists[i]['individual_subhalo_masses'].values
         for positions, masses in zip(dist_positions, dist_masses):
             marker_sizes = (np.log10(masses) - 7) * (11-7) * marker_size
-            ax.scatter(positions[:, 0], positions[:, 1], alpha=0.1, color=colors[i], s=marker_sizes)
+            ax.scatter(positions[:, 0], positions[:, 1], alpha=0.05, color=colors[i], s=marker_sizes)
     ax.set_xlabel('Subhalo position x')
     ax.set_ylabel('Subhalo position y')
     if trace:
@@ -250,18 +250,17 @@ if "posterior" in gen_mode:
 
 ### PLOTTING ###
 prior = None
-if "prior" in plot_types:
+if "prior" in plot_mode:
     print('Plotting prior')
     prior = Empirical(file_name=prior_file_name)
     plot_distribution(prior,
-                      file_name=fig_directories['prior'] / 'histograms.pdf',
-                      num_resample=None)
-if "ground_truth" in plot_types:
+                      file_name=fig_directories['prior'] / 'histograms.pdf')
+if "ground_truth" in plot_mode:
     print('Plotting ground truth')
     gt_trace = torch.load(gt_file_name)
     plot_trace(gt_trace,
                file_name=fig_directories['ground_truth'] / 'observed.pdf')
-if "posterior" in plot_types:
+if "posterior" in plot_mode:
     print('Plotting posterior')
     posterior = Empirical(file_name=posterior_file_name)
     gt_trace = torch.load(gt_file_name)
