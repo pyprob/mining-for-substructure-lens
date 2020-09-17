@@ -289,7 +289,6 @@ if sum("posterior" in mode for mode in gen_mode) > 0:
 
 ### PLOTTING ###
 prior = None
-posterior = None
 if "prior" in plot_mode:
     print('Plotting prior')
     prior = Empirical(file_name=prior_file_name)
@@ -315,11 +314,10 @@ if sum("posterior" in mode for mode in gen_mode) > 0:
         plot_distribution(dists, trace=gt_trace,
                           file_name=fig_directories[pos]
                           / 'histograms.pdf')
+        # Close Empirical
         posterior.close()
 
 
-# Close Empiricals
+# Close Empirical
 if prior is not None:
     prior.close()
-if posterior is not None:
-    posterior.close()
