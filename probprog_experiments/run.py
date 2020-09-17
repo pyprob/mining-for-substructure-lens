@@ -26,15 +26,17 @@ marker_size = plt.rcParams['lines.markersize'] ** 2.
 
 probprog_settings.setup()
 
-choices = ['prior', 'posterior', 'ground_truth', '']
+choices_plot = ['prior', 'posterior_IS', 'posterior_IC', 'ground_truth']
+choices_gen = ['prior', 'posterior_IS', 'ground_truth', 'posterior_IC', 'data']
 parser = argparse.ArgumentParser()
 parser.add_argument('--results_dir', default='results', type=str)
 parser.add_argument('--fig_dir', default='figs', type=str)
 parser.add_argument('--num_traces', default=int(1e2), type=int)
 parser.add_argument('--plot', nargs='+', default='', type=str,
-                    choices=choices)
-parser.add_argument('--gen', nargs='+', default='',
-                    choices=choices, type=str)
+                    choices=choices_plot)
+parser.add_argument('--gen', nargs='+', default='', choices=choices_gen,
+                    type=str)
+parser.add_argument('--train_ic', action="store_true")
 
 args = parser.parse_args()
 results_dir = Path(args.results_dir)
@@ -42,11 +44,12 @@ fig_dir = Path(args.fig_dir)
 plot_mode = args.plot
 gen_mode = args.gen
 num_traces = args.num_traces
+train_ic = args.train_ic
 
 results_directories = {d: results_dir / d
-                       for d in ["prior", "posterior", "ground_truth"]}
+                       for d in choices_gen + ['models']}
 fig_directories = {d: fig_dir / d
-                   for d in ["prior", "posterior", "ground_truth"]}
+                   for d in choices_plot}
 
 for key, new_dir in results_directories.items():
     if not new_dir.exists():
@@ -57,6 +60,7 @@ for key, new_dir in fig_directories.items():
         new_dir.mkdir(parents=True)
 
 #### MODEL ####
+
 
 class LensingModel(pyprob.Model):
 
@@ -108,7 +112,8 @@ def plot_trace(trace, file_name=None):
         plt.show()
 
 
-def plot_distribution(dists, file_name=None, n_bins=25, num_resample=1000, trace=None):
+def plot_distribution(dists, file_name=None, n_bins=25, num_resample=1000,
+                      trace=None):
     if isinstance(dists, Empirical):
         dists = [dists]
 
@@ -229,10 +234,42 @@ model = LensingModel()
 
 prior_file_name = str(results_directories['prior'] / 'prior.distribution')
 gt_file_name = str(results_directories['ground_truth'] / 'gt')
-posterior_file_name = str(results_directories['posterior'] / 'posterior.distribution')
+posterior_names = {"posterior_IS": str(results_directories['posterior_IS'] /
+                                       'posterior_IS.distribution'),
+                   "posterior_IC": str(results_directories['posterior_IC'] /
+                                       'posterior_IC.distribution')}
+### Generate data ###
+if "data" in gen_mode:
+    print("Generating data")
+    model.save_dataset(results_directories['data'],
+                       num_traces, num_traces)
 
+### Train Inference Network ###
+if train_ic:
+    obs_embeds = {'observed_image': {'dim': 200}}
+    files_generator = results_directories['data'].glob('pyprob_traces*')
+
+    def is_empty(generator):
+        try:
+            next(generator)
+            return False
+        except StopIteration:
+            return True
+
+    if not is_empty(files_generator):
+        dataset_dir = str(results_directories['data'])
+    else:
+        dataset_dir = None
+    save_path = results_directories['models'] / "ic"
+    # TODO validation stuff
+    model.learn_inference_network(num_traces=num_traces,
+                                  dataset_dir=dataset_dir,
+                                  observe_embeddings=obs_embeds,
+                                  save_file_name_prefix=str(save_path),
+                                  inference_network=pyprob.InferenceNetwork.LSTM)
 
 ### GENERATE DISTRIBUTIONS ###
+
 if "prior" in gen_mode:
     print("Generating prior distribution")
     model.prior(file_name=prior_file_name,
@@ -241,15 +278,18 @@ if "ground_truth" in gen_mode:
     print("Generating ground truth")
     model_trace = model.sample()
     torch.save(model_trace, gt_file_name)
-if "posterior" in gen_mode:
-    print("Generating posterior distribution")
-    model_trace = torch.load(gt_file_name)
-    obs = model_trace['simulated_image_log10'].flatten()
-    model.posterior(observe={'observed_image': obs}, num_traces=num_traces,
-                    file_name=posterior_file_name)
+if sum("posterior" in mode for mode in gen_mode) > 0:
+    posteriors = [mode for mode in gen_mode if "posterior" in mode]
+    for pos in posteriors:
+        print(f"Generating {pos} distribution")
+        model_trace = torch.load(gt_file_name)
+        obs = model_trace['observed_image'].flatten()
+        model.posterior(observe={'observed_image': obs}, num_traces=num_traces,
+                        file_name=posterior_names[pos])
 
 ### PLOTTING ###
 prior = None
+posterior = None
 if "prior" in plot_mode:
     print('Plotting prior')
     prior = Empirical(file_name=prior_file_name)
@@ -260,19 +300,26 @@ if "ground_truth" in plot_mode:
     gt_trace = torch.load(gt_file_name)
     plot_trace(gt_trace,
                file_name=fig_directories['ground_truth'] / 'observed.pdf')
-if "posterior" in plot_mode:
-    print('Plotting posterior')
-    posterior = Empirical(file_name=posterior_file_name)
-    gt_trace = torch.load(gt_file_name)
+if sum("posterior" in mode for mode in gen_mode) > 0:
+    posteriors = [mode for mode in gen_mode if "posterior" in mode]
+    for pos in posteriors:
+        print(f'Plotting {pos}')
+        posterior = Empirical(file_name=posterior_names[pos])
+        gt_trace = torch.load(gt_file_name)
 
-    if prior is not None:
-        dists = [prior, posterior]
-    else:
-        dists = [posterior]
+        if prior is not None:
+            dists = [prior, posterior]
+        else:
+            dists = [posterior]
 
-    plot_distribution(dists, trace=gt_trace,
-                      file_name=fig_directories['posterior'] / 'histograms.pdf')
-    posterior.close()
+        plot_distribution(dists, trace=gt_trace,
+                          file_name=fig_directories[pos]
+                          / 'histograms.pdf')
+        posterior.close()
 
+
+# Close Empiricals
 if prior is not None:
     prior.close()
+if posterior is not None:
+    posterior.close()

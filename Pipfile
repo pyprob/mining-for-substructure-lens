@@ -16,6 +16,7 @@ autograd = "*"
 pyprob = "*"
 palettable = "*"
 seaborn = "*"
+torchvision = "*"
 
 [requires]
 python_version = "3.8"
