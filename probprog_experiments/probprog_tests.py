@@ -9,7 +9,7 @@ import pickle
 
 from simulation.wrapper import LensingObservationWithSubhalos
 from simulation.units import M_s
-import paper_settings
+from notebooks import paper_settings
 import pyprob
 import torch
 

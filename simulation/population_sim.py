@@ -469,8 +469,11 @@ class SubhaloPopulation:
         https://stackoverflow.com/questions/31114330/python-generating-random-numbers-from-a-power-law-distribution
         """
         # u = np.random.uniform(0, 1, size=n_sub)
-        u = pyprob.sample(pyprob.distributions.Uniform(torch.zeros(n_sub),
-                                                       torch.ones(n_sub))).flatten().double().numpy()
+        u = []
+        for _ in range(n_sub):
+            u.append(pyprob.sample(pyprob.distributions.Uniform(0,1),
+                                   address=f'n_sub_{n_sub}'))
+        u = torch.stack(u).double().numpy()
         m_low_u, m_high_u = m_sub_min ** (beta + 1), m_sub_max ** (beta + 1)
         return (m_low_u + (m_high_u - m_low_u) * u) ** (1.0 / (beta + 1.0))
 
@@ -482,12 +485,24 @@ class SubhaloPopulation:
         x_sub = []
         y_sub = []
         while len(x_sub) < n_sub:
+            x_candidates = []
+            y_candidates = []
             # x_candidates = np.random.uniform(low=-r_max, high=r_max, size=n_sub - len(x_sub))
-            x_candidates = pyprob.sample(pyprob.distributions.Uniform(torch.zeros(n_sub - len(x_sub))-r_max,
-                                                                      torch.zeros(n_sub - len(x_sub))+r_max)).flatten().double().numpy()
             # y_candidates = np.random.uniform(low=-r_max, high=r_max, size=n_sub - len(x_sub))
-            y_candidates = pyprob.sample(pyprob.distributions.Uniform(torch.zeros(n_sub - len(x_sub))-r_max,
-                                                                      torch.zeros(n_sub - len(x_sub))+r_max)).flatten().double().numpy()
+            n = n_sub - len(x_sub)
+            for _ in range(n):
+                x_candidates.append(pyprob.sample(pyprob.distributions \
+                                                  .Uniform(-r_max, r_max),
+                                                  address=f'x_cand_{n}'))
+                y_candidates.append(pyprob.sample(pyprob.distributions \
+                                                  .Uniform(-r_max, r_max),
+                                                  address=f'y_cand_{n}'))
+            if n > 0:
+                x_candidates = torch.stack(x_candidates).double().numpy()
+                y_candidates = torch.stack(y_candidates).double().numpy()
+            else:
+                x_candidates = np.array([], dtype='double')
+                y_candidates = np.array([], dtype='double')
             r2 = x_candidates ** 2 + y_candidates ** 2
             good = (r2 <= r_max ** 2) * (r2 >= r_min ** 2)
             x_sub += list(x_candidates[good])

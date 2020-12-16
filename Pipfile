@@ -4,7 +4,6 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-python-language-server = {extras = ["all"], version = "*"}
 
 [packages]
 numpy = "*"
@@ -13,10 +12,10 @@ six = "*"
 scipy = "*"
 astropy = "*"
 autograd = "*"
-pyprob = "*"
 palettable = "*"
 seaborn = "*"
 torchvision = "*"
+pyprob = {editable = true, git = "https://github.com/pyprob/pyprob"}
 
 [requires]
 python_version = "3.8"

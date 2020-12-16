@@ -12,7 +12,7 @@ from pathlib import Path
 
 from simulation.wrapper import LensingObservationWithSubhalos
 import simulation.units as units
-import probprog_settings
+from probprog_experiments import probprog_settings
 import pyprob
 from pyprob.distributions import Empirical
 import torch
